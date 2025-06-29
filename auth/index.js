@@ -1,30 +1,39 @@
-import bodyParser from "body-parser";
-import express from "express"
+import express from "express";
 import morgan from "morgan";
 import cors from "cors";
-import authRoutes from "./routes/authRoutes.js"
-import dotenv from "dotenv"
+import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
+import authRoutes from "./routes/authRoutes.js"; // adjust path if needed
 import connectDb from "./db/db.js";
 
-
-const app=express();
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(morgan('common'))
-app.use(cors())
-
 dotenv.config();
+
+const app = express();
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+app.use(morgan("dev"));
+app.use(
+  cors({
+    origin: "http://localhost:3000", // frontend URL
+    credentials: true,
+  })
+);
+
+// Database Connection
 connectDb();
 
-app.use("/",authRoutes)
+// Routes
+app.use("/", authRoutes); // handles /signup, /login, etc.
 
-app.get("/",(req,res)=>{
-   
-    res.status(201).send("hello from auth microserviece")
-})
+app.get("/", (req, res) => {
+  res.status(200).send("Hello from the AUTH microservice.");
+});
 
-
-
-
-const PORT=5001;
-app.listen(PORT,()=>{ console.log(` The app is listening on port ${PORT}`)})
+// Start Server
+const PORT = process.env.PORT || 5001;
+app.listen(PORT, () => {
+  console.log(`🚀 AUTH service running at http://localhost:${PORT}`);
+});
