@@ -8,7 +8,7 @@ import {
     deleteRegistration
 } from '../controllers/registrationController.js';
 
-import { verifyAuthToken } from '../middleware/authMiddleware.js';
+import { verifyAuthToken } from '../../events/middleware/authMiddleware.js';
 
 const router = express.Router();
 

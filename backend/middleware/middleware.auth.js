@@ -14,6 +14,12 @@ export const verifyAccessToken = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+     req.user = {
+                id: decoded.userId, // Fix: use userId from token payload
+                email: decoded.email, // keep if present in token
+                role: decoded.role
+            };
+            next();
 
     const user = await User.findById(decoded.userId).select(
       "-password -refreshToken"

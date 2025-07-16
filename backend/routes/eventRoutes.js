@@ -6,8 +6,10 @@ import {
   deleteEvent,
   getAllEvents,
   getEventById,
-  uploadEventImage
-} from "../controllers/eventController.js";
+  uploadEventImage,
+  BannerController
+  
+} from "../controller/eventController.js";
 
 import {
   uploadSingleImage,
@@ -15,7 +17,7 @@ import {
   checkFileUpload
 } from "../middleware/uploadMiddleware.js";
 
-import { verifyAuthToken } from "../middleware/authMiddleware.js";
+import { verifyAccessToken } from "../middleware/middleware.auth.js";
 
 
 const router = express.Router();
@@ -24,7 +26,7 @@ const router = express.Router();
 // Create event (requires authentication)
 router.post(
   "/create",
-   verifyAuthToken,
+   verifyAccessToken,
   uploadSingleImage,
   handleUploadError,
   createEvent
@@ -33,7 +35,7 @@ router.post(
 // Update event by ID
 router.put(
   "/update/:id",
-  verifyAuthToken,
+  verifyAccessToken,
   uploadSingleImage,
   handleUploadError,
   updateEvent
@@ -42,7 +44,7 @@ router.put(
 // Upload/replace image for an existing event
 router.post(
   "/upload-image/:id",
-  verifyAuthToken,
+  verifyAccessToken,
   uploadSingleImage,
   handleUploadError,
   checkFileUpload,
@@ -53,7 +55,7 @@ router.post(
 
 router.delete(
   "/delete/:id",
-  verifyAuthToken,  
+  verifyAccessToken,
   deleteEvent
 );
 
@@ -64,5 +66,10 @@ router.get("/getAll",  getAllEvents);
 
 // Get event by ID (public read? → remove middleware if desired)
 router.get("/get/:id", getEventById);
+
+//Banner Routes
+router.post("/banner/create", BannerController.createBanner);
+router.get("/banner/getAll", BannerController.getAllBanners);
+router.delete("/banner/delete/:id", BannerController.deleteBanner);
 
 export default router;

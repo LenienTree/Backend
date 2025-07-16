@@ -103,6 +103,23 @@ const registrationSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
+const BannerSchema= new mongoose.Schema({
+    image: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now
+    }
+}, { timestamps: true });
+
 /* ---------------- Models ---------------- */
 export const eventModel = mongoose.model('event', eventSchema);
 export const registrationModel = mongoose.model('Registration', registrationSchema);
+export const bannerModel = mongoose.model('Banner', BannerSchema);

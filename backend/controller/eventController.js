@@ -1,4 +1,4 @@
-import {eventModel} from '../model.js/eventSchema.js';
+import {eventModel,bannerModel} from '../model/eventSchema.js';
 import { uploadToS3, deleteFromS3, generateFileName } from '../utils/s3Config.js';
 
 // Helper: Upload image and return URL
@@ -133,3 +133,48 @@ export const uploadEventImage = async (req, res) => {
         res.status(500).json({ error: 'Failed to upload image.', details: error.message });
     }
 };
+
+export const BannerController = {
+    // Create a new banner
+    createBanner: async (req, res) => {
+        try {
+            if (!req.file) {
+                return res.status(400).json({ error: 'Banner image is required.' });
+            }
+            const imageUrl = await handleImageUpload(req.file);
+            const bannerData = { image: imageUrl };
+            const newBanner = await new bannerModel(bannerData).save();
+            res.status(201).json(newBanner);
+        }
+        catch (error) {
+            console.error('Create Banner Error:', error);
+            res.status(500).json({ error: 'Failed to create banner.', details: error.message });
+        }
+    },
+    // Get all banners
+    getAllBanners: async (_req, res) => {
+        try {
+            const banners = await bannerModel.find();
+            res.json(banners);
+        } catch (error) {
+            console.error('Fetch Banners Error:', error);
+            res.status(500).json({ error: 'Failed to fetch banners.', details: error.message });
+        }
+    },
+    //delete a banner
+    deleteBanner: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const banner = await bannerModel.findById(id);
+            if (!banner) return res.status(404).json({ error: 'Banner not found.' });
+            if (banner.image) await deleteFromS3(banner.image);
+            await bannerModel.findByIdAndDelete(id);
+            res.json({ message: 'Banner deleted successfully.' });
+        } catch (error) {
+            console.error('Delete Banner Error:', error);
+            res.status(500).json({ error: 'Failed to delete banner.', details: error.message });
+        }
+    }
+};
+
+
