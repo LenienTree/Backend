@@ -1,4 +1,4 @@
-import { registrationModel } from '../models/eventSchema.js';
+import { registrationModel } from '../model/eventSchema.js';
 
 /**
  * @desc Register the authenticated user for an event

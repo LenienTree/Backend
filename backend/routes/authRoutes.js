@@ -4,6 +4,7 @@ import {
   login,
   logout,
   getProfile,
+  editProfile,
   requestPasswordResetForLoggedIn,
   requestPasswordReset,
   resetPassword,
@@ -17,6 +18,7 @@ router.post("/login", login);                           // Public
 router.post("/logout", verifyAccessToken, logout);      // ✅ Secured
 
 router.get("/profile", verifyAccessToken, getProfile);  // ✅ Secured
+router.put("/profile",verifyAccessToken,editProfile)
 
 router.post("/request-password-reset", requestPasswordReset); // Public
 router.post("/request-password-reset-logged-in", verifyAccessToken, requestPasswordResetForLoggedIn); // ✅ Secured

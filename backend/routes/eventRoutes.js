@@ -9,9 +9,10 @@ import {
   uploadEventImage,
   getEventHighlights,
   getMyEvents,
-  BannerController
+  BannerController,
+  checkInToEvent
 } from "../controller/eventController.js";
-
+import { registerForEvent } from "../controller/registrationController.js";
 import {
   uploadSingleImage,
   handleUploadError,
@@ -73,6 +74,9 @@ router.get("/getEventHighlights", verifyAccessToken, getEventHighlights);
 
 // Get event by ID (public read? → remove middleware if desired)
 router.get("/get/:id", getEventById);
+
+// Check in to an event (protected)
+router.post("/:eventId/check-in", verifyAccessToken, checkInToEvent);
 
 //Banner Routes
 router.post("/banner/create", BannerController.createBanner);

@@ -119,11 +119,29 @@ export const logout = async (req, res) => {
 // ✅ Get Profile
 export const getProfile = async (req, res) => {
   try {
-    res.json(req.user);
+    const fetchProfile = await User.findById(req.user._id);
+    res.json(fetchProfile);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+export const editProfile=async(req,res)=>{
+    try {
+        const { name, email, phoneNumber, college, graduationYear } = req.body;
+        const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).json({ message: "User not found" });
+        user.name = name;
+        user.email = email;
+        user.phoneNumber = phoneNumber;
+        user.college = college;
+        user.graduationYear = graduationYear;
+        await user.save();
+        res.json(user);
+    } catch (error) {
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+}
 
 // ✅ Request OTP (Not Logged In)
 export const requestPasswordReset = async (req, res) => {
