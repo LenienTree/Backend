@@ -31,8 +31,8 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // Routes
-app.use("/auth", authRoutes);
-app.use("/events", eventRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/events", eventRoutes);
 
 // Default route
 app.get("/", (req, res) => {

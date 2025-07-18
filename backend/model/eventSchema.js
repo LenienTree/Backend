@@ -50,6 +50,7 @@ const eventSchema = new mongoose.Schema({
     type: {
         type: String,
         required: true,
+        enum: ["hackathon", "workshop", "competition", "other","techfest","ideathon","webinar","others" ],
         default: "hackathon"
     },
     community: {
@@ -59,6 +60,10 @@ const eventSchema = new mongoose.Schema({
     sponsors: {
         type: [String],
         default: []
+    },
+    website: {
+        type: String,
+        trim: true
     },
     status: {
         type: String,
@@ -90,8 +95,10 @@ const registrationSchema = new mongoose.Schema({
     },
     userId: {
         type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
         required: true
     },
+    
     registrationDate: {
         type: Date,
         default: Date.now

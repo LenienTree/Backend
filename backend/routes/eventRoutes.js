@@ -7,8 +7,9 @@ import {
   getAllEvents,
   getEventById,
   uploadEventImage,
+  getEventHighlights,
+  getMyEvents,
   BannerController
-  
 } from "../controller/eventController.js";
 
 import {
@@ -61,8 +62,14 @@ router.delete(
 
 
 
-// Get all events (public read? → remove middleware if desired)
-router.get("/getAll",  getAllEvents);
+// Get all approved events (public)
+router.get("/", getAllEvents);
+
+// Get events created by the current user (protected)
+router.get("/my-events", verifyAccessToken, getMyEvents);
+
+// Get event highlights (name, description, image, type) - protected
+router.get("/getEventHighlights", verifyAccessToken, getEventHighlights);
 
 // Get event by ID (public read? → remove middleware if desired)
 router.get("/get/:id", getEventById);

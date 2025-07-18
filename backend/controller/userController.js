@@ -2,43 +2,24 @@ import User from "../model/userSchema.js";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 
-// ✅ Generate Access & Refresh Tokens
-const generateTokens = (userId, role) => {
-  const accessToken = jwt.sign(
-    { userId, role },
-    process.env.ACCESS_TOKEN_SECRET,
-    {
-      expiresIn: "15d",
-    }
-  );
-  const refreshToken = jwt.sign(
-    { userId, role },
-    process.env.REFRESH_TOKEN_SECRET,
-    {
-      expiresIn: "7d",
-    }
-  );
-  return { accessToken, refreshToken };
+// ✅ Generate Access Token
+const generateAccessToken = (userId, role) => {
+  return jwt.sign({ userId, role }, process.env.ACCESS_TOKEN_SECRET, {
+    expiresIn: "50d",
+  });
 };
 
-// ✅ Set Cookies
-const setCookies = (res, accessToken, refreshToken) => {
+// ✅ Set Access Token as Cookie
+const setAccessTokenCookie = (res, accessToken) => {
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
     maxAge: 15 * 60 * 1000,
   });
-
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
 };
 
-// ✅ Send OTP
+// ✅ Send OTP Email
 const sendOTPEmail = async (email, otp) => {
   const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -60,22 +41,28 @@ const sendOTPEmail = async (email, otp) => {
 
 // ✅ Signup Controller
 export const signup = async (req, res) => {
-  const { email, password, name, role } = req.body;
+  const { email, password, name, role, graduationYear, phoneNumber, college } = req.body;
+
   try {
-    if (!email || !password || !name || !role) {
+    if (!email || !password || !name || !role || !graduationYear || !phoneNumber || !college) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
     const userExists = await User.findOne({ email });
-    if (userExists)
-      return res.status(400).json({ message: "User already exists" });
+    if (userExists) return res.status(400).json({ message: "User already exists" });
 
-    const user = await User.create({ name, email, password, role });
-    const { accessToken, refreshToken } = generateTokens(user._id, user.role);
-    user.refreshToken = refreshToken;
-    await user.save();
+    const user = await User.create({
+      name,
+      email,
+      password,
+      role,
+      college,
+      graduationYear,
+      phoneNumber,
+    });
 
-    setCookies(res, accessToken, refreshToken);
+    const accessToken = generateAccessToken(user._id, user.role);
+    setAccessTokenCookie(res, accessToken);
 
     res.status(201).json({
       _id: user._id,
@@ -93,19 +80,17 @@ export const signup = async (req, res) => {
 export const login = async (req, res) => {
   const { email, password } = req.body;
   try {
-    if (!email || !password)
+    if (!email || !password) {
       return res.status(400).json({ message: "Email and password required" });
+    }
 
     const user = await User.findOne({ email });
     if (!user || !(await user.comparePassword(password))) {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    const { accessToken, refreshToken } = generateTokens(user._id, user.role);
-    user.refreshToken = refreshToken;
-    await user.save();
-
-    setCookies(res, accessToken, refreshToken);
+    const accessToken = generateAccessToken(user._id, user.role);
+    setAccessTokenCookie(res, accessToken);
 
     res.json({
       _id: user._id,
@@ -123,59 +108,10 @@ export const login = async (req, res) => {
 // ✅ Logout Controller
 export const logout = async (req, res) => {
   try {
-    const refreshToken = req.cookies.refreshToken;
-    if (refreshToken) {
-      const decoded = jwt.verify(
-        refreshToken,
-        process.env.REFRESH_TOKEN_SECRET
-      );
-      const user = await User.findById(decoded.userId);
-      if (user) {
-        user.refreshToken = null;
-        await user.save();
-      }
-    }
-
     res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
-
     res.json({ message: "Logged out successfully" });
   } catch (error) {
     console.error("❌ Logout error:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-
-// ✅ Refresh Access Token
-export const refreshToken = async (req, res) => {
-  try {
-    const incomingToken = req.cookies.refreshToken;
-    if (!incomingToken)
-      return res.status(401).json({ message: "No refresh token provided" });
-
-    const decoded = jwt.verify(incomingToken, process.env.REFRESH_TOKEN_SECRET);
-    const user = await User.findById(decoded.userId);
-
-    if (!user || user.refreshToken !== incomingToken) {
-      return res.status(401).json({ message: "Invalid refresh token" });
-    }
-
-    const accessToken = jwt.sign(
-      { userId: decoded.userId },
-      process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "15m" }
-    );
-
-    res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 15 * 60 * 1000,
-    });
-
-    res.json({ message: "Token refreshed successfully" });
-  } catch (error) {
-    console.error("❌ Refresh token error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
@@ -207,9 +143,7 @@ export const requestPasswordReset = async (req, res) => {
     res.json({ message: "OTP sent to your email" });
   } catch (error) {
     console.error("❌ OTP error:", error);
-    res
-      .status(500)
-      .json({ message: "Failed to send OTP", error: error.message });
+    res.status(500).json({ message: "Failed to send OTP", error: error.message });
   }
 };
 
@@ -232,9 +166,7 @@ export const resetPassword = async (req, res) => {
     res.json({ message: "Password reset successfully" });
   } catch (error) {
     console.error("❌ Reset password error:", error);
-    res
-      .status(500)
-      .json({ message: "Failed to reset password", error: error.message });
+    res.status(500).json({ message: "Failed to reset password", error: error.message });
   }
 };
 
@@ -256,8 +188,6 @@ export const requestPasswordResetForLoggedIn = async (req, res) => {
     res.json({ message: "OTP sent to your email" });
   } catch (error) {
     console.error("❌ Logged-in OTP error:", error);
-    res
-      .status(500)
-      .json({ message: "Failed to send OTP", error: error.message });
+    res.status(500).json({ message: "Failed to send OTP", error: error.message });
   }
 };

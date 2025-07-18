@@ -22,7 +22,31 @@ const userSchema = new mongoose.Schema(
         }
       },
     },
+    phoneNumber: {
+      type: String,
+      required: [true, "Phone number is required"],
+      validate(value) {
+        if (!validator.isMobilePhone(value, "any", { strictMode: false })) {
+          throw new Error("The value needs to be a valid phone number");
+        }
+      },
+    },
+    college: {
+      type: String,
+      required: [true, "College is required"],
+      trim: true,
+    },
+    graduationYear: {
+      type: Number,
+      required: [true, "Graduation year is required"],
+      validate(value) {
+        if (!validator.isInt(value.toString(), { min: 1900, max: 2100 })) {
+          throw new Error("The value needs to be a valid graduation year");
+        }
+      },
+    },
 
+    
     password: {
       type: String,
       required: [true, "Password is required"],
@@ -32,7 +56,7 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["user", "manager", "admin"],
+      enum: ["user", "admin"],
       default: "user",
     },
 

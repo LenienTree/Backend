@@ -15,7 +15,7 @@ export const createEvent = async (req, res) => {
         const userId = req.user.id; // Get user ID from JWT
         const {
             eventname, eventMode, paymentMode, singlePrice, description, eventDate,
-            college, location, type, community, sponsors
+            college, location, type, community, sponsors,website
         } = req.body;
 
         // Validate required fields
@@ -37,6 +37,7 @@ export const createEvent = async (req, res) => {
             type,
             community,
             sponsors,
+            website,
             role,
             userId // Store the user ID who created the event
         };
@@ -92,14 +93,42 @@ export const deleteEvent = async (req, res) => {
     }
 };
 
-// Get all events
+// Get all events with limited fields
+export const getEventHighlights = async (_req, res) => {
+    try {
+        const events = await eventModel.find({}, 'eventname description eventimage type');
+        console.log(events);
+        res.json(events);
+    } catch (error) {
+        console.error('Get Highlights Error:', error);
+        res.status(500).json({ error: 'Failed to fetch event highlights', details: error.message });
+    }
+};
+
+// Get all approved events
 export const getAllEvents = async (_req, res) => {
     try {
-        const events = await eventModel.find();
+        const events = await eventModel.find({ status: 'approved' });
+        console.log(events);
         res.json(events);
     } catch (error) {
         console.error('Fetch All Error:', error);
         res.status(500).json({ error: 'Failed to fetch events.', details: error.message });
+    }
+};
+
+// Get events created by the current user
+export const getMyEvents = async (req, res) => {
+    try {
+        console.log('User object from request:', req.user);
+        const userId = req.user._id; // Use _id from the user object
+        console.log('Looking for events with userId:', userId);
+        const events = await eventModel.find({ userId });
+        console.log('Found events:', events);
+        res.json(events);
+    } catch (error) {
+        console.error('Get My Events Error:', error);
+        res.status(500).json({ error: 'Failed to fetch your events', details: error.message });
     }
 };
 
