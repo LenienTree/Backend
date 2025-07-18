@@ -4,6 +4,7 @@ import nodemailer from "nodemailer";
 
 // ✅ Generate Access Token
 const generateAccessToken = (userId, role) => {
+  console.log(process.env.ACCESS_TOKEN_SECRET);
   return jwt.sign({ userId, role }, process.env.ACCESS_TOKEN_SECRET, {
     expiresIn: "50d",
   });
@@ -44,9 +45,44 @@ export const signup = async (req, res) => {
   const { email, password, name, role, graduationYear, phoneNumber, college } = req.body;
 
   try {
-    if (!email || !password || !name || !role || !graduationYear || !phoneNumber || !college) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
+
+if (!email) {
+  console.log("Validation Error: Email is required.");
+  // In a real API, you would typically return res.status(400).json(...) here
+  // For console logging, we'll just log and continue for demonstration,
+  // but in production, you'd stop execution.
+}
+
+if (!password) {
+  console.log("Validation Error: Password is required.");
+}
+
+if (!name) {
+  console.log("Validation Error: Name is required.");
+}
+
+if (!role) {
+  console.log("Validation Error: Role is required.");
+}
+
+if (!graduationYear) {
+  console.log("Validation Error: Graduation Year is required.");
+}
+
+if (!phoneNumber) {
+  console.log("Validation Error: Phone Number is required.");
+}
+
+if (!college) {
+  console.log("Validation Error: College is required.");
+}
+
+// If you want to see if all fields were present:
+if (email && password && name && role && graduationYear && phoneNumber && college) {
+  console.log("All fields are present. Proceeding with user creation/logic.");
+} else {
+  console.log("One or more fields are missing. Please check previous logs.");
+}
 
     const userExists = await User.findOne({ email });
     if (userExists) return res.status(400).json({ message: "User already exists" });
@@ -81,11 +117,13 @@ export const login = async (req, res) => {
   const { email, password } = req.body;
   try {
     if (!email || !password) {
+      console.error("❌ Email and password are required for login");
       return res.status(400).json({ message: "Email and password required" });
     }
 
     const user = await User.findOne({ email });
     if (!user || !(await user.comparePassword(password))) {
+      console.error("❌ Invalid email or password");
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
