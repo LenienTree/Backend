@@ -20,6 +20,7 @@ router.post("/logout", verifyAccessToken, logout);      // ✅ Secured
 router.get("/profile", verifyAccessToken, getProfile);  // ✅ Secured
 router.put("/profile",verifyAccessToken,editProfile)
 
+
 router.post("/request-password-reset", requestPasswordReset); // Public
 router.post("/request-password-reset-logged-in", verifyAccessToken, requestPasswordResetForLoggedIn); // ✅ Secured
 router.post("/reset-password", resetPassword);          // Public

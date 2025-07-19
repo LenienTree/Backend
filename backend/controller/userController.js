@@ -1,6 +1,7 @@
 import User from "../model/userSchema.js";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
+import {eventModel} from "../model/eventSchema.js";
 
 // ✅ Generate Access Token
 const generateAccessToken = (userId, role) => {
@@ -247,3 +248,69 @@ export const requestPasswordResetForLoggedIn = async (req, res) => {
     res.status(500).json({ message: "Failed to send OTP", error: error.message });
   }
 };
+
+export const getallUsers=async(req,res)=>{
+  if(req.user.role!="admin") return res.status(401).json({ message: "Unauthorized" });
+    try {
+        const users=await User.find()
+        res.json(users)
+    } catch (error) {
+      console.error("❌ Get all users error:", error);
+        res.status(500).json({ message: "Server error", error: error.message });  
+    }
+}
+
+export const getAllevents=async(req,res)=>{
+  if(req.user.role!="admin") return res.status(401).json({ message: "Unauthorized" });  
+    try {
+        const events=await eventModel.find()
+        res.json(events)
+    } catch (error) {
+      console.error("❌ Get all events error:", error);
+        res.status(500).json({ message: "Server error", error: error.message });  
+    }
+}
+
+export const deleteUser=async(req,res)=>{
+    if(req.user.role!="admin") return res.status(401).json({ message: "Unauthorized" });  
+    try {
+        const user=await User.findByIdAndDelete(req.params.id)
+        res.json(user)
+    } catch (error) {
+      console.error("❌ Delete user error:", error);
+        res.status(500).json({ message: "Server error", error: error.message });  
+    }
+}
+
+export const editUserbyId=async(req,res)=>{
+    if(req.user.role!="admin") return res.status(401).json({ message: "Unauthorized" });  
+    try {
+        const user=await User.findByIdAndUpdate(req.params.id,req.body,{new:true})
+        res.json(user)
+    } catch (error) {
+      console.error("❌ Edit  user error:", error);
+        res.status(500).json({ message: "Server error", error: error.message });  
+    }
+}
+
+export const EditeventById=async(req,res)=>{
+    if(req.user.role!="admin") return res.status(401).json({ message: "Unauthorized" });  
+    try {
+        const event=await eventModel.findByIdAndUpdate(req.params.id,req.body,{new:true})
+        res.json(event)
+    } catch (error) {
+      console.error("❌ Edit  event error:", error);
+        res.status(500).json({ message: "Server error", error: error.message });  
+    }
+} 
+
+export const deleteEvent=async(req,res)=>{
+    if(req.user.role!="admin") return res.status(401).json({ message: "Unauthorized" });  
+    try {
+        const event=await eventModel.findByIdAndDelete(req.params.id)
+        res.json(event)
+    } catch (error) {
+      console.error("❌ Delete event error:", error);
+        res.status(500).json({ message: "Server error", error: error.message });  
+    }
+}
