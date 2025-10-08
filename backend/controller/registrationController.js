@@ -13,7 +13,7 @@ export const registerForEvent = async (req, res) => {
         if (!eventId) return res.status(400).json({ error: 'Missing eventId' });
 
         // Check if already registered
-        const existing = await registrationModel.findOne({ eventId, userId });
+        const existing = await registrationModel.findOne({ where: { eventId, userId } });
         if (existing) {
             return res.status(409).json({ error: 'Already registered for this event' });
         }
@@ -40,7 +40,7 @@ export const registerForEvent = async (req, res) => {
  */
 export const getAllRegistrations = async (_req, res) => {
     try {
-        const registrations = await registrationModel.find().sort({ createdAt: -1 });
+        const registrations = await registrationModel.findAll({ order: [['createdAt', 'DESC']] });
         res.json(registrations);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch registrations', details: error.message });
@@ -61,7 +61,7 @@ export const getRegistrationsByEvent = async (req, res) => {
     }   
     try {
         const { eventId } = req.params;
-        const registrations = await registrationModel.find({ eventId });
+        const registrations = await registrationModel.findAll({ where: { eventId } });
         res.json(registrations);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch registrations', details: error.message });
@@ -76,7 +76,7 @@ export const getRegistrationsByEvent = async (req, res) => {
 export const getMyRegistrations = async (req, res) => {
     try {
         const userId = req.user.id;
-        const registrations = await registrationModel.find({ userId });
+        const registrations = await registrationModel.findAll({ where: { userId } });
         res.json(registrations);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch user registrations', details: error.message });
@@ -97,11 +97,11 @@ export const updateRegistrationStatus = async (req, res) => {
             return res.status(400).json({ error: 'Invalid status' });
         }
 
-        const updated = await registrationModel.findByIdAndUpdate(
-            id,
-            { status },
-            { new: true }
-        );
+        const registration = await registrationModel.findByPk(id);
+        if (!registration) return res.status(404).json({ error: 'Registration not found' });
+        
+        await registration.update({ status });
+        const updated = registration;
 
         if (!updated) return res.status(404).json({ error: 'Registration not found' });
 
@@ -119,9 +119,10 @@ export const updateRegistrationStatus = async (req, res) => {
 export const deleteRegistration = async (req, res) => {
     try {
         const { id } = req.params;
-        const deleted = await registrationModel.findByIdAndDelete(id);
+        const registration = await registrationModel.findByPk(id);
 
-        if (!deleted) return res.status(404).json({ error: 'Registration not found' });
+        if (!registration) return res.status(404).json({ error: 'Registration not found' });
+        await registration.destroy();
 
         res.json({ message: 'Registration deleted' });
     } catch (error) {

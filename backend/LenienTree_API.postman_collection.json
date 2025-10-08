@@ -1,0 +1,809 @@
+{
+	"info": {
+		"_postman_id": "lenientree-api-collection",
+		"name": "LenienTree API",
+		"description": "Complete API collection for LenienTree Backend with PostgreSQL",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:5000",
+			"type": "string"
+		},
+		{
+			"key": "accessToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "userId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "eventId",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Signup",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('userId', response.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"John Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"password\": \"password123\",\n    \"phoneNumber\": \"+1234567890\",\n    \"college\": \"MIT\",\n    \"graduationYear\": 2025,\n    \"role\": \"user\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/signup",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "signup"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('accessToken', response.token);",
+									"    pm.collectionVariables.set('userId', response.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"john.doe@example.com\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "login"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/profile",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "profile"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Edit Profile",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"John Doe Updated\",\n    \"email\": \"john.doe@example.com\",\n    \"phoneNumber\": \"+1234567890\",\n    \"college\": \"MIT\",\n    \"graduationYear\": 2025\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/profile",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "profile"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Request Password Reset",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"john.doe@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/request-password-reset",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "request-password-reset"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Request Password Reset (Logged In)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/request-password-reset-logged-in",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "request-password-reset-logged-in"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Reset Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"john.doe@example.com\",\n    \"otp\": \"123456\",\n    \"newPassword\": \"newPassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/reset-password",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "reset-password"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/logout",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "logout"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Events",
+			"item": [
+				{
+					"name": "Create Event",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('eventId', response.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "eventname",
+									"value": "Tech Hackathon 2025",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "A 48-hour coding challenge",
+									"type": "text"
+								},
+								{
+									"key": "eventDate",
+									"value": "2025-12-15",
+									"type": "text"
+								},
+								{
+									"key": "location",
+									"value": "San Francisco, CA",
+									"type": "text"
+								},
+								{
+									"key": "type",
+									"value": "hackathon",
+									"type": "text"
+								},
+								{
+									"key": "eventMode",
+									"value": "offline",
+									"type": "text"
+								},
+								{
+									"key": "paymentMode",
+									"value": "free",
+									"type": "text"
+								},
+								{
+									"key": "singlePrice",
+									"value": "0",
+									"type": "text"
+								},
+								{
+									"key": "college",
+									"value": "MIT",
+									"type": "text"
+								},
+								{
+									"key": "community",
+									"value": "Tech Community",
+									"type": "text"
+								},
+								{
+									"key": "sponsors",
+									"value": "[\"Google\", \"Microsoft\"]",
+									"type": "text"
+								},
+								{
+									"key": "website",
+									"value": "https://techhackathon.com",
+									"type": "text"
+								},
+								{
+									"key": "eventimage",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/events/create",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "events", "create"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Events",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/events",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "events"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Event By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/events/get/{{eventId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "events", "get", "{{eventId}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get My Events",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/events/my-events",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "events", "my-events"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Event Highlights",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/events/getEventHighlights",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "events", "getEventHighlights"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Event",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "eventname",
+									"value": "Updated Tech Hackathon 2025",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "Updated description",
+									"type": "text"
+								},
+								{
+									"key": "eventimage",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/events/update/{{eventId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "events", "update", "{{eventId}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Event Image",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "eventimage",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/events/upload-image/{{eventId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "events", "upload-image", "{{eventId}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Event",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/events/delete/{{eventId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "events", "delete", "{{eventId}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Check-in to Event",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/events/{{eventId}}/check-in",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "events", "{{eventId}}", "check-in"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Banners",
+			"item": [
+				{
+					"name": "Create Banner",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "image",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/events/banner/create",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "events", "banner", "create"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Banners",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/events/banner/getAll",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "events", "banner", "getAll"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Banner",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/events/banner/delete/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "events", "banner", "delete", ":id"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Registrations",
+			"item": [
+				{
+					"name": "Register for Event",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/registrations/{{eventId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "registrations", "{{eventId}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Registrations",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/registrations",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "registrations"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Registrations by Event",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/registrations/event/{{eventId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "registrations", "event", "{{eventId}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get My Registrations",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/registrations/my",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "registrations", "my"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Registration Status",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"approved\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/registrations/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "registrations", ":id"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Registration",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/registrations/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "registrations", ":id"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "Get All Users",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/users",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "admin", "users"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Events (Admin)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/events",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "admin", "events"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/users/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "admin", "users", ":id"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Edit User by ID",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Updated Name\",\n    \"email\": \"updated@example.com\",\n    \"role\": \"admin\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/users/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "admin", "users", ":id"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Edit Event by ID",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"eventname\": \"Updated Event Name\",\n    \"status\": \"approved\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/events/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "admin", "events", ":id"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Event (Admin)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/events/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "admin", "events", ":id"]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

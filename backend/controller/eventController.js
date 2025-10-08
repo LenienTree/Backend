@@ -1,4 +1,3 @@
-import mongoose from 'mongoose';
 import { eventModel, bannerModel, registrationModel } from '../model/eventSchema.js';
 import { uploadToS3, deleteFromS3, generateFileName } from '../utils/s3Config.js';
 
@@ -43,7 +42,7 @@ export const createEvent = async (req, res) => {
             return res.status(400).json({ error: 'Event image is required.' });
         }
 
-        const savedEvent = await new eventModel(eventData).save();
+        const savedEvent = await eventModel.create(eventData);
         res.status(201).json(savedEvent);
 
     } catch (error) {
@@ -56,7 +55,7 @@ export const createEvent = async (req, res) => {
 export const updateEvent = async (req, res) => {
     try {
         const { id } = req.params;
-        const existingEvent = await eventModel.findById(id);
+        const existingEvent = await eventModel.findByPk(id);
         if (!existingEvent) return res.status(404).json({ error: 'Event not found.' });
 
         const updateData = { ...req.body };
@@ -65,7 +64,8 @@ export const updateEvent = async (req, res) => {
             updateData.eventimage = await handleImageUpload(req.file, existingEvent.eventimage);
         }
 
-        const updatedEvent = await eventModel.findByIdAndUpdate(id, updateData, { new: true });
+        await existingEvent.update(updateData);
+        const updatedEvent = existingEvent;
         res.json(updatedEvent);
 
     } catch (error) {
@@ -78,11 +78,11 @@ export const updateEvent = async (req, res) => {
 export const deleteEvent = async (req, res) => {
     try {
         const { id } = req.params;
-        const event = await eventModel.findById(id);
+        const event = await eventModel.findByPk(id);
         if (!event) return res.status(404).json({ error: 'Event not found.' });
 
         if (event.eventimage) await deleteFromS3(event.eventimage);
-        await eventModel.findByIdAndDelete(id);
+        await event.destroy();
 
         res.json({ message: 'Event deleted successfully.' });
 
@@ -95,7 +95,7 @@ export const deleteEvent = async (req, res) => {
 // Get event highlights
 export const getEventHighlights = async (_req, res) => {
     try {
-        const events = await eventModel.find({}, 'eventname description eventimage type');
+        const events = await eventModel.findAll({ attributes: ['id', 'eventname', 'description', 'eventimage', 'type'] });
         res.json(events);
     } catch (error) {
         console.error('[Get Highlights Error]:', error.message, error.stack);
@@ -106,7 +106,7 @@ export const getEventHighlights = async (_req, res) => {
 // Get all approved events
 export const getAllEvents = async (_req, res) => {
     try {
-        const events = await eventModel.find({ status: 'approved' });
+        const events = await eventModel.findAll({ where: { status: 'approved' } });
         res.json(events);
     } catch (error) {
         console.error('[Fetch All Events Error]:', error.message, error.stack);
@@ -117,8 +117,8 @@ export const getAllEvents = async (_req, res) => {
 // Get events by current user
 export const getMyEvents = async (req, res) => {
     try {
-        const userId = req.user._id;
-        const events = await eventModel.find({ userId });
+        const userId = req.user.id;
+        const events = await eventModel.findAll({ where: { userId } });
         res.json(events);
     } catch (error) {
         console.error('[Get My Events Error]:', error.message, error.stack);
@@ -130,7 +130,7 @@ export const getMyEvents = async (req, res) => {
 export const getEventById = async (req, res) => {
     try {
         const { id } = req.params;
-        const event = await eventModel.findById(id);
+        const event = await eventModel.findByPk(id);
         if (!event) return res.status(404).json({ error: 'Event not found.' });
         res.json(event);
     } catch (error) {
@@ -143,12 +143,13 @@ export const getEventById = async (req, res) => {
 export const uploadEventImage = async (req, res) => {
     try {
         const { id } = req.params;
-        const event = await eventModel.findById(id);
+        const event = await eventModel.findByPk(id);
         if (!event) return res.status(404).json({ error: 'Event not found.' });
         if (!req.file) return res.status(400).json({ error: 'No image file provided.' });
 
         const newImageUrl = await handleImageUpload(req.file, event.eventimage);
-        const updatedEvent = await eventModel.findByIdAndUpdate(id, { eventimage: newImageUrl }, { new: true });
+        await event.update({ eventimage: newImageUrl });
+        const updatedEvent = event;
 
         res.json({ message: 'Image uploaded.', eventimage: newImageUrl, event: updatedEvent });
     } catch (error) {
@@ -166,7 +167,9 @@ export const checkInToEvent = async (req, res) => {
     console.log("Received eventId:", eventId);
     console.log("Extracted userId from JWT:", userId);
 
-    if (!mongoose.Types.ObjectId.isValid(eventId)) {
+    // UUID validation for Sequelize
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(eventId)) {
         console.log("Invalid eventId:", eventId);
         return res.status(400).json({ error: 'Invalid event ID' });
     }
@@ -177,12 +180,12 @@ export const checkInToEvent = async (req, res) => {
     }
 
     try {
-        const event = await eventModel.findById(eventId);
+        const event = await eventModel.findByPk(eventId);
         console.log("Event fetched:", event ? "Found" : "Not Found");
 
         if (!event) return res.status(404).json({ error: 'Event not found' });
 
-        let registration = await registrationModel.findOne({ eventId, userId });
+        let registration = await registrationModel.findOne({ where: { eventId, userId } });
         console.log("Registration fetched:", registration ? registration : "None");
 
         if (!registration) {
@@ -228,7 +231,7 @@ export const BannerController = {
             }
 
             const imageUrl = await handleImageUpload(req.file);
-            const newBanner = await new bannerModel({ image: imageUrl }).save();
+            const newBanner = await bannerModel.create({ image: imageUrl });
 
             res.status(201).json(newBanner);
         } catch (error) {
@@ -239,7 +242,7 @@ export const BannerController = {
 
     getAllBanners: async (_req, res) => {
         try {
-            const banners = await bannerModel.find();
+            const banners = await bannerModel.findAll();
             res.json(banners);
         } catch (error) {
             console.error('[Get All Banners Error]:', error.message, error.stack);
@@ -250,11 +253,11 @@ export const BannerController = {
     deleteBanner: async (req, res) => {
         try {
             const { id } = req.params;
-            const banner = await bannerModel.findById(id);
+            const banner = await bannerModel.findByPk(id);
             if (!banner) return res.status(404).json({ error: 'Banner not found.' });
 
             if (banner.image) await deleteFromS3(banner.image);
-            await bannerModel.findByIdAndDelete(id);
+            await banner.destroy();
 
             res.json({ message: 'Banner deleted successfully.' });
 

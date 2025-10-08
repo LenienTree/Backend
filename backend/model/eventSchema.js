@@ -1,132 +1,156 @@
-import mongoose from "mongoose";
+import { DataTypes } from "sequelize";
+import { sequelize } from "../db/db.js";
+import User from "./userSchema.js";
 
-/* ---------------- Event Schema ---------------- */
-const eventSchema = new mongoose.Schema({
+/* ---------------- Event Model ---------------- */
+export const eventModel = sequelize.define("Event", {
+    id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true,
+    },
     eventname: {
-        type: String,
-        required: true,
-        trim: true
+        type: DataTypes.STRING,
+        allowNull: false,
     },
     eventimage: {
-        type: String,
-        required: true,
-        trim: true
+        type: DataTypes.TEXT,
+        allowNull: false,
     },
     paymentMode: {
-        type: String,
-        enum: ["free", "paid"],
-        default: "free",
-        required: true
+        type: DataTypes.ENUM("free", "paid"),
+        defaultValue: "free",
+        allowNull: false,
     },
     singlePrice: {
-        type: Number,
-        default: 0
+        type: DataTypes.DECIMAL(10, 2),
+        defaultValue: 0,
     },
     eventMode: {
-        type: String,
-        enum: ["online", "offline"],
-        default: "null",
-        required: true,
-        trim: true
+        type: DataTypes.ENUM("online", "offline"),
+        defaultValue: "online",
+        allowNull: false,
     },
     description: {
-        type: String,
-        required: true,
-        trim: true
+        type: DataTypes.TEXT,
+        allowNull: false,
     },
     eventDate: {
-        type: Date,
-        required: true
+        type: DataTypes.DATE,
+        allowNull: false,
     },
     college: {
-        type: String,
-        trim: true
+        type: DataTypes.STRING,
+        allowNull: true,
     },
     location: {
-        type: String,
-        required: true,
-        trim: true
+        type: DataTypes.STRING,
+        allowNull: false,
     },
     type: {
-        type: String,
-        required: true,
-        enum: ["hackathon", "workshop", "competition", "other","techfest","ideathon","webinar","others" ],
-        default: "hackathon"
+        type: DataTypes.ENUM("hackathon", "workshop", "competition", "other", "techfest", "ideathon", "webinar", "others"),
+        defaultValue: "hackathon",
+        allowNull: false,
     },
     community: {
-        type: String,
-        trim: true
+        type: DataTypes.STRING,
+        allowNull: true,
     },
     sponsors: {
-        type: [String],
-        default: []
+        type: DataTypes.ARRAY(DataTypes.STRING),
+        defaultValue: [],
     },
     website: {
-        type: String,
-        trim: true
+        type: DataTypes.STRING,
+        allowNull: true,
     },
     status: {
-        type: String,
-        enum: ["pending", "approved", "rejected"],
-        default: "pending"
+        type: DataTypes.ENUM("pending", "approved", "rejected"),
+        defaultValue: "pending",
     },
     response: {
-        type: String,
-        default: "You will receive the confirmation email shortly"
+        type: DataTypes.TEXT,
+        defaultValue: "You will receive the confirmation email shortly",
     },
-    
     role: {
-        type: String,
-        trim: true
+        type: DataTypes.STRING,
+        allowNull: true,
     },
     userId: {
-        type: String,
-        trim: true,
-        required: true
+        type: DataTypes.UUID,
+        allowNull: false,
+        references: {
+            model: User,
+            key: 'id'
+        }
     }
-}, { timestamps: true });
+}, {
+    timestamps: true,
+    tableName: 'Events'
+});
 
-/* ---------------- Registration Schema ---------------- */
-const registrationSchema = new mongoose.Schema({
+/* ---------------- Registration Model ---------------- */
+export const registrationModel = sequelize.define("Registration", {
+    id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true,
+    },
     eventId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'event',
-        required: true
+        type: DataTypes.UUID,
+        allowNull: false,
+        references: {
+            model: eventModel,
+            key: 'id'
+        }
     },
     userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
+        type: DataTypes.UUID,
+        allowNull: false,
+        references: {
+            model: User,
+            key: 'id'
+        }
     },
-    
     registrationDate: {
-        type: Date,
-        default: Date.now
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
     },
     status: {
-        type: String,
-        enum: ["pending", "approved", "rejected"],
-        default: "pending"
+        type: DataTypes.ENUM("pending", "approved", "rejected"),
+        defaultValue: "pending",
+    },
+    checkedIn: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
     }
-}, { timestamps: true });
+}, {
+    timestamps: true,
+    tableName: 'Registrations'
+});
 
-const BannerSchema= new mongoose.Schema({
+/* ---------------- Banner Model ---------------- */
+export const bannerModel = sequelize.define("Banner", {
+    id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true,
+    },
     image: {
-        type: String,
-        required: true,
-        trim: true
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    },
-    updatedAt: {
-        type: Date,
-        default: Date.now
+        type: DataTypes.TEXT,
+        allowNull: false,
     }
-}, { timestamps: true });
+}, {
+    timestamps: true,
+    tableName: 'Banners'
+});
 
-/* ---------------- Models ---------------- */
-export const eventModel = mongoose.model('event', eventSchema);
-export const registrationModel = mongoose.model('Registration', registrationSchema);
-export const bannerModel = mongoose.model('Banner', BannerSchema);
+// Define associations
+User.hasMany(eventModel, { foreignKey: 'userId', as: 'events' });
+eventModel.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+User.hasMany(registrationModel, { foreignKey: 'userId', as: 'registrations' });
+registrationModel.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+eventModel.hasMany(registrationModel, { foreignKey: 'eventId', as: 'registrations' });
+registrationModel.belongsTo(eventModel, { foreignKey: 'eventId', as: 'event' });

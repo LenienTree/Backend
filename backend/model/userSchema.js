@@ -1,109 +1,116 @@
-import mongoose from "mongoose";
+import { DataTypes } from "sequelize";
+import { sequelize } from "../db/db.js";
 import validator from "validator";
 import bcrypt from "bcrypt";
 
-const userSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: [true, "Name is required"],
-      trim: true,
+const User = sequelize.define("User", {
+    id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true,
     },
-
-    email: {
-      type: String,
-      required: [true, "Email is required"],
-      unique: true,
-      lowercase: true,
-      trim: true,
-      validate(value) {
-        if (!validator.isEmail(value)) {
-          throw new Error("The value needs to be a valid email");
+    name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+            notEmpty: {
+                msg: "Name is required"
+            }
         }
-      },
+    },
+    email: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true,
+        validate: {
+            isEmail: {
+                msg: "The value needs to be a valid email"
+            }
+        },
+        set(value) {
+            this.setDataValue('email', value.toLowerCase().trim());
+        }
     },
     phoneNumber: {
-      type: String,
-      required: [true, "Phone number is required"],
-      validate(value) {
-        if (!validator.isMobilePhone(value, "any", { strictMode: false })) {
-          throw new Error("The value needs to be a valid phone number");
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+            isValidPhone(value) {
+                if (!validator.isMobilePhone(value, "any", { strictMode: false })) {
+                    throw new Error("The value needs to be a valid phone number");
+                }
+            }
         }
-      },
     },
     college: {
-      type: String,
-      required: [true, "College is required"],
-      trim: true,
+        type: DataTypes.STRING,
+        allowNull: false,
     },
     graduationYear: {
-      type: Number,
-      required: [true, "Graduation year is required"],
-      validate(value) {
-        if (!validator.isInt(value.toString(), { min: 1900, max: 2100 })) {
-          throw new Error("The value needs to be a valid graduation year");
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        validate: {
+            min: {
+                args: [1900],
+                msg: "Graduation year must be at least 1900"
+            },
+            max: {
+                args: [2100],
+                msg: "Graduation year must be at most 2100"
+            }
         }
-      },
     },
-
-    
     password: {
-      type: String,
-      required: [true, "Password is required"],
-      minlength: [7, "Password must be at least 7 characters long"],
-      trim: true,
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+            len: {
+                args: [7, 255],
+                msg: "Password must be at least 7 characters long"
+            }
+        }
     },
-
     role: {
-      type: String,
-      enum: ["user", "admin"],
-      default: "user",
+        type: DataTypes.ENUM("user", "admin"),
+        defaultValue: "user",
     },
-
-    // For Refresh Token Storage (JWT)
     refreshToken: {
-      type: String,
-      default: null, // will be null until user logs in
+        type: DataTypes.TEXT,
+        defaultValue: null,
     },
-
-    // For password reset via OTP
     resetOTP: {
-      type: String,
+        type: DataTypes.STRING,
+        allowNull: true,
     },
     resetOTPExpiry: {
-      type: Date,
+        type: DataTypes.DATE,
+        allowNull: true,
     },
-
-    // to track if OTP was verified
     isVerified: {
-      type: Boolean,
-      default: false,
-    },
-
-    // Managers can pitch events
-    
-    
-  },
-  { timestamps: true }
-);
-
-// Pre-save: hash password if modified
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
-
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (err) {
-    next(err);
-  }
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+    }
+}, {
+    timestamps: true,
+    hooks: {
+        beforeCreate: async (user) => {
+            if (user.password) {
+                const salt = await bcrypt.genSalt(10);
+                user.password = await bcrypt.hash(user.password, salt);
+            }
+        },
+        beforeUpdate: async (user) => {
+            if (user.changed('password')) {
+                const salt = await bcrypt.genSalt(10);
+                user.password = await bcrypt.hash(user.password, salt);
+            }
+        }
+    }
 });
 
-// Password comparison method
-userSchema.methods.comparePassword = async function (candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
+// Instance method for password comparison
+User.prototype.comparePassword = async function (candidatePassword) {
+    return await bcrypt.compare(candidatePassword, this.password);
 };
 
-const User = mongoose.model("User", userSchema);
 export default User;

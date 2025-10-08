@@ -85,7 +85,7 @@ if (email && password && name && role && graduationYear && phoneNumber && colleg
   console.log("One or more fields are missing. Please check previous logs.");
 }
 
-    const userExists = await User.findOne({ email });
+    const userExists = await User.findOne({ where: { email } });
     if (userExists) return res.status(400).json({ message: "User already exists" });
 
     const user = await User.create({
@@ -98,11 +98,11 @@ if (email && password && name && role && graduationYear && phoneNumber && colleg
       phoneNumber,
     });
 
-    const accessToken = generateAccessToken(user._id, user.role);
+    const accessToken = generateAccessToken(user.id, user.role);
     setAccessTokenCookie(res, accessToken);
 
     res.status(201).json({
-      _id: user._id,
+      id: user.id,
       name: user.name,
       email: user.email,
       role: user.role,
@@ -122,17 +122,17 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Email and password required" });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ where: { email } });
     if (!user || !(await user.comparePassword(password))) {
       console.error("❌ Invalid email or password");
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    const accessToken = generateAccessToken(user._id, user.role);
+    const accessToken = generateAccessToken(user.id, user.role);
     setAccessTokenCookie(res, accessToken);
 
     res.json({
-      _id: user._id,
+      id: user.id,
       name: user.name,
       email: user.email,
       role: user.role,
@@ -158,7 +158,7 @@ export const logout = async (req, res) => {
 // ✅ Get Profile
 export const getProfile = async (req, res) => {
   try {
-    const fetchProfile = await User.findById(req.user._id);
+    const fetchProfile = await User.findByPk(req.user.id);
     res.json(fetchProfile);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
@@ -168,7 +168,7 @@ export const getProfile = async (req, res) => {
 export const editProfile=async(req,res)=>{
     try {
         const { name, email, phoneNumber, college, graduationYear } = req.body;
-        const user = await User.findById(req.user._id);
+        const user = await User.findByPk(req.user.id);
         if (!user) return res.status(404).json({ message: "User not found" });
         user.name = name;
         user.email = email;
@@ -186,7 +186,7 @@ export const editProfile=async(req,res)=>{
 export const requestPasswordReset = async (req, res) => {
   const { email } = req.body;
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ where: { email } });
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -208,7 +208,7 @@ export const requestPasswordReset = async (req, res) => {
 export const resetPassword = async (req, res) => {
   const { email, otp, newPassword } = req.body;
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ where: { email } });
     if (!user) return res.status(404).json({ message: "User not found" });
 
     if (user.resetOTP !== otp || Date.now() > new Date(user.resetOTPExpiry)) {
@@ -231,7 +231,7 @@ export const resetPassword = async (req, res) => {
 export const requestPasswordResetForLoggedIn = async (req, res) => {
   const email = req.user.email;
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ where: { email } });
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -252,7 +252,7 @@ export const requestPasswordResetForLoggedIn = async (req, res) => {
 export const getallUsers=async(req,res)=>{
   if(req.user.role!="admin") return res.status(401).json({ message: "Unauthorized" });
     try {
-        const users=await User.find()
+        const users=await User.findAll()
         res.json(users)
     } catch (error) {
       console.error("❌ Get all users error:", error);
@@ -263,7 +263,7 @@ export const getallUsers=async(req,res)=>{
 export const getAllevents=async(req,res)=>{
   if(req.user.role!="admin") return res.status(401).json({ message: "Unauthorized" });  
     try {
-        const events=await eventModel.find()
+        const events=await eventModel.findAll()
         res.json(events)
     } catch (error) {
       console.error("❌ Get all events error:", error);
@@ -274,7 +274,8 @@ export const getAllevents=async(req,res)=>{
 export const deleteUser=async(req,res)=>{
     if(req.user.role!="admin") return res.status(401).json({ message: "Unauthorized" });  
     try {
-        const user=await User.findByIdAndDelete(req.params.id)
+        const user=await User.findByPk(req.params.id)
+        if(user) await user.destroy();
         res.json(user)
     } catch (error) {
       console.error("❌ Delete user error:", error);
@@ -285,7 +286,10 @@ export const deleteUser=async(req,res)=>{
 export const editUserbyId=async(req,res)=>{
     if(req.user.role!="admin") return res.status(401).json({ message: "Unauthorized" });  
     try {
-        const user=await User.findByIdAndUpdate(req.params.id,req.body,{new:true})
+        const user=await User.findByPk(req.params.id)
+        if(user) {
+            await user.update(req.body);
+        }
         res.json(user)
     } catch (error) {
       console.error("❌ Edit  user error:", error);
@@ -296,7 +300,10 @@ export const editUserbyId=async(req,res)=>{
 export const EditeventById=async(req,res)=>{
     if(req.user.role!="admin") return res.status(401).json({ message: "Unauthorized" });  
     try {
-        const event=await eventModel.findByIdAndUpdate(req.params.id,req.body,{new:true})
+        const event=await eventModel.findByPk(req.params.id)
+        if(event) {
+            await event.update(req.body);
+        }
         res.json(event)
     } catch (error) {
       console.error("❌ Edit  event error:", error);
@@ -307,7 +314,8 @@ export const EditeventById=async(req,res)=>{
 export const deleteEvent=async(req,res)=>{
     if(req.user.role!="admin") return res.status(401).json({ message: "Unauthorized" });  
     try {
-        const event=await eventModel.findByIdAndDelete(req.params.id)
+        const event=await eventModel.findByPk(req.params.id)
+        if(event) await event.destroy();
         res.json(event)
     } catch (error) {
       console.error("❌ Delete event error:", error);

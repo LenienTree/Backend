@@ -16,7 +16,9 @@ export const verifyAccessToken = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
     // ✅ Fetch the user from DB (refreshToken removed)
-    const user = await User.findById(decoded.userId).select("-password");
+    const user = await User.findByPk(decoded.userId, {
+      attributes: { exclude: ['password'] }
+    });
     if (!user) {
       return res
         .status(401)
